@@ -1,11 +1,11 @@
 # Setup And Running
 
-This guide walks through installing the monorepo, configuring the secure backend proxy, running the local server, and opening the example frontends.
+This guide walks through installing the npm monorepo, configuring the secure backend proxy, running each layer, and opening the example frontends.
 
 ## Prerequisites
 
 - Node.js `20` or newer.
-- pnpm `11.7.0` or compatible.
+- npm `10` or newer.
 - A running Open WebUI instance.
 - A server-side Open WebUI API key.
 
@@ -13,13 +13,20 @@ The Open WebUI API key must stay on the backend. Do not add it to frontend `.env
 
 ## 1. Install Dependencies
 
-From the repository root:
+Install once from the repository root:
 
 ```bash
-pnpm install
+npm install
 ```
 
-If pnpm asks to approve dependency build scripts, approve `esbuild`. Vite and tsup need it for package builds.
+npm workspaces install and link:
+
+- `@ccais/embedded-chatbot-core`
+- `@ccais/embedded-chatbot-server`
+- `@ccais/embedded-chatbot-react`
+- `@ccais/embedded-chatbot-angular`
+- `@ccais/embedded-chatbot-react-demo`
+- `@ccais/embedded-chatbot-angular-demo`
 
 ## 2. Configure The Backend
 
@@ -51,36 +58,75 @@ Required values:
 - `OPEN_WEBUI_MODEL`: must be a model available to Open WebUI.
 - `ALLOWED_ORIGINS`: must include each website or local dev server origin that will load the chatbot.
 
-## 3. Build Packages
+## 3. Root Commands
 
-Build all packages:
-
-```bash
-pnpm build
-```
-
-This creates:
-
-- `packages/core/dist/ccais-embedded-chatbot.js`
-- React wrapper output in `packages/react/dist`
-- Angular wrapper output in `packages/angular/dist`
-- Server output in `packages/server/dist`
-
-## 4. Run The Backend In Development
-
-Start the Fastify proxy:
+Run these from the repository root:
 
 ```bash
-pnpm dev
+npm run build
+npm run typecheck
+npm run lint
+npm run clean
+npm run dev
 ```
 
-Equivalent package-specific command:
+`npm run dev` starts the backend proxy.
+
+## 4. Core SDK Layer
+
+Package:
+
+```text
+@ccais/embedded-chatbot-core
+```
+
+Build the framework-agnostic Lit web component:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-server dev
+npm run build --workspace @ccais/embedded-chatbot-core
 ```
 
-Verify the server:
+Typecheck it:
+
+```bash
+npm run typecheck --workspace @ccais/embedded-chatbot-core
+```
+
+Watch-build during SDK development:
+
+```bash
+npm run dev --workspace @ccais/embedded-chatbot-core
+```
+
+Build output:
+
+```text
+packages/core/dist/ccais-embedded-chatbot.js
+packages/core/dist/index.d.ts
+```
+
+Browser usage:
+
+```html
+<script type="module" src="./path/to/ccais-embedded-chatbot.js"></script>
+<ccais-chatbot api-base-url="http://localhost:4000"></ccais-chatbot>
+```
+
+## 5. Backend Proxy Layer
+
+Package:
+
+```text
+@ccais/embedded-chatbot-server
+```
+
+Run the server in development:
+
+```bash
+npm run dev --workspace @ccais/embedded-chatbot-server
+```
+
+Verify health:
 
 ```bash
 curl http://localhost:4000/health
@@ -95,9 +141,19 @@ Expected response:
 }
 ```
 
-## 5. Test A Chat Request
+Build the server:
 
-With the backend running and Open WebUI available, send a request:
+```bash
+npm run build --workspace @ccais/embedded-chatbot-server
+```
+
+Start compiled JavaScript:
+
+```bash
+npm run start --workspace @ccais/embedded-chatbot-server
+```
+
+Test a chat request:
 
 ```bash
 curl -X POST http://localhost:4000/api/chat \
@@ -126,67 +182,77 @@ POST {OPEN_WEBUI_BASE_URL}/api/chat/completions
 
 using `Authorization: Bearer {OPEN_WEBUI_API_KEY}` on the server side only.
 
-## 6. Run The Plain HTML Example
+## 6. React Wrapper Layer
 
-Build the core package first:
-
-```bash
-pnpm --filter @ccais/embedded-chatbot-core build
-```
-
-Open:
+Package:
 
 ```text
-examples/plain-html/index.html
+@ccais/embedded-chatbot-react
 ```
 
-The page imports:
-
-```html
-<script type="module" src="../../packages/core/dist/ccais-embedded-chatbot.js"></script>
-```
-
-The chatbot element points to:
-
-```html
-api-base-url="http://localhost:4000"
-```
-
-Keep the backend proxy running while using the example.
-
-## 7. Run The React Demo
-
-Build the packages first so workspace package exports resolve:
+Build the React wrapper:
 
 ```bash
-pnpm build
+npm run build --workspace @ccais/embedded-chatbot-react
 ```
 
-Start the React demo:
+Typecheck it:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-react-demo dev
+npm run typecheck --workspace @ccais/embedded-chatbot-react
 ```
 
-Vite will print a local URL, usually:
+Use it in a React app:
 
-```text
-http://localhost:5173
+```tsx
+import { CcaisChatbot } from "@ccais/embedded-chatbot-react";
+
+export default function App() {
+  return <CcaisChatbot chatbotId="support" apiBaseUrl="http://localhost:4000" />;
+}
+```
+
+Run the included React demo:
+
+```bash
+npm run dev --workspace @ccais/embedded-chatbot-react-demo
 ```
 
 Keep the backend running in another terminal:
 
 ```bash
-pnpm dev
+npm run dev --workspace @ccais/embedded-chatbot-server
+```
+
+Vite usually serves the React demo at:
+
+```text
+http://localhost:5173
 ```
 
 `http://localhost:5173` is included in the default `ALLOWED_ORIGINS`.
 
-## 8. Use The Angular Wrapper
+## 7. Angular Wrapper Layer
 
-The Angular package exports `CcaisChatbotModule` and `CcaisChatbotComponent`.
+Package:
 
-Import the module:
+```text
+@ccais/embedded-chatbot-angular
+```
+
+Build the Angular wrapper:
+
+```bash
+npm run build --workspace @ccais/embedded-chatbot-angular
+```
+
+Typecheck it:
+
+```bash
+npm run typecheck --workspace @ccais/embedded-chatbot-angular
+```
+
+Use it in an Angular app:
 
 ```ts
 import { NgModule } from "@angular/core";
@@ -210,42 +276,53 @@ Render the wrapper:
 
 If your Angular dev server runs on a different port, add that origin to `ALLOWED_ORIGINS`.
 
-## 9. Production-Like Local Run
+## 8. Plain HTML Example
 
-Build the server:
-
-```bash
-pnpm --filter @ccais/embedded-chatbot-server build
-```
-
-Start compiled JavaScript:
+Build the core package first:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-server start
+npm run build --workspace @ccais/embedded-chatbot-core
 ```
 
-The same `.env` values are used.
-
-## 10. Useful Commands
+Serve the repository root:
 
 ```bash
-pnpm install
-pnpm build
-pnpm typecheck
-pnpm lint
-pnpm clean
-pnpm dev
+python3 -m http.server 8090
 ```
 
-Package-specific examples:
+Open:
+
+```text
+http://127.0.0.1:8090/examples/plain-html/index.html
+```
+
+Keep the backend proxy running while using the example:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-core build
-pnpm --filter @ccais/embedded-chatbot-react build
-pnpm --filter @ccais/embedded-chatbot-angular build
-pnpm --filter @ccais/embedded-chatbot-server dev
-pnpm --filter @ccais/embedded-chatbot-server start
+npm run dev --workspace @ccais/embedded-chatbot-server
 ```
+
+## 9. Design Preview
+
+Build the core package:
+
+```bash
+npm run build --workspace @ccais/embedded-chatbot-core
+```
+
+Serve the repository root:
+
+```bash
+python3 -m http.server 8090
+```
+
+Open:
+
+```text
+http://127.0.0.1:8090/examples/design-preview/index.html
+```
+
+The design preview is preloaded with sample messages and does not require Open WebUI.
 
 ## Troubleshooting
 
@@ -263,8 +340,8 @@ Confirm Open WebUI is running, `OPEN_WEBUI_BASE_URL` is correct, `OPEN_WEBUI_MOD
 
 Plain HTML example does not load the chatbot:
 
-Run `pnpm --filter @ccais/embedded-chatbot-core build` and confirm `packages/core/dist/ccais-embedded-chatbot.js` exists.
+Run `npm run build --workspace @ccais/embedded-chatbot-core` and confirm `packages/core/dist/ccais-embedded-chatbot.js` exists.
 
 React demo loads but chat requests fail:
 
-Keep the backend running with `pnpm dev`, and confirm the React demo origin is in `ALLOWED_ORIGINS`.
+Keep the backend running with `npm run dev --workspace @ccais/embedded-chatbot-server`, and confirm the React demo origin is in `ALLOWED_ORIGINS`.

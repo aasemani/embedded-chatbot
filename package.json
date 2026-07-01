@@ -4,16 +4,24 @@
   "private": true,
   "description": "Reusable embedded chatbot SDK with framework wrappers and a secure backend proxy.",
   "type": "module",
-  "packageManager": "pnpm@11.7.0",
+  "packageManager": "npm@11.16.0",
+  "workspaces": [
+    "packages/core",
+    "packages/server",
+    "packages/react",
+    "packages/angular",
+    "examples/react-demo",
+    "examples/angular-demo"
+  ],
   "scripts": {
-    "build": "pnpm --filter './packages/**' -r run build",
-    "dev": "pnpm --filter @ccais/embedded-chatbot-server dev",
-    "lint": "pnpm --filter './packages/**' -r run lint",
-    "typecheck": "pnpm --filter './packages/**' -r run typecheck",
-    "clean": "pnpm --filter './packages/**' -r run clean"
+    "build": "npm run build --workspace @ccais/embedded-chatbot-core && npm run build --workspace @ccais/embedded-chatbot-server && npm run build --workspace @ccais/embedded-chatbot-react && npm run build --workspace @ccais/embedded-chatbot-angular",
+    "dev": "npm run dev --workspace @ccais/embedded-chatbot-server",
+    "lint": "npm run lint --workspace @ccais/embedded-chatbot-core && npm run lint --workspace @ccais/embedded-chatbot-server && npm run lint --workspace @ccais/embedded-chatbot-react && npm run lint --workspace @ccais/embedded-chatbot-angular",
+    "typecheck": "npm run typecheck --workspace @ccais/embedded-chatbot-core && npm run typecheck --workspace @ccais/embedded-chatbot-server && npm run typecheck --workspace @ccais/embedded-chatbot-react && npm run typecheck --workspace @ccais/embedded-chatbot-angular",
+    "clean": "npm run clean --workspaces --if-present"
   },
   "engines": {
     "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
+    "npm": ">=10.0.0"
   }
 }

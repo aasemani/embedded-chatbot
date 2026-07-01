@@ -37,15 +37,15 @@ Open WebUI /api/chat/completions
 For complete setup and run instructions, see [docs/setup-and-running.md](docs/setup-and-running.md).
 
 ```bash
-pnpm install
+npm install
 cp .env.example .env
 ```
 
 Edit `.env` and set `OPEN_WEBUI_API_KEY` to the real server-side Open WebUI key. Then build the packages and start the backend proxy:
 
 ```bash
-pnpm build
-pnpm dev
+npm run build
+npm run dev
 ```
 
 Verify the backend:
@@ -65,7 +65,7 @@ Only the backend reads `OPEN_WEBUI_API_KEY`. The frontend sends chat requests to
 ## Install
 
 ```bash
-pnpm install
+npm install
 ```
 
 ## Backend Setup
@@ -79,7 +79,7 @@ cp .env.example .env
 Set `OPEN_WEBUI_API_KEY` to the real server-side key, then start the proxy:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-server dev
+npm run dev --workspace @ccais/embedded-chatbot-server
 ```
 
 Health check:
@@ -168,7 +168,7 @@ export class AppModule {}
 Build the core package first:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-core build
+npm run build --workspace @ccais/embedded-chatbot-core
 ```
 
 Then open `examples/plain-html/index.html`. It loads:
@@ -189,32 +189,67 @@ Generated reference screenshots:
 ## Local Development Commands
 
 ```bash
-pnpm install
-pnpm build
-pnpm typecheck
-pnpm lint
-pnpm dev
+npm install
+npm run build
+npm run typecheck
+npm run lint
+npm run dev
 ```
 
-`pnpm dev` starts the backend proxy. Package-specific commands can be run with `pnpm --filter <package-name> <script>`.
+`npm run dev` starts the backend proxy. Package-specific commands can be run with `npm run <script> --workspace <package-name>`.
 
 Common package commands:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-server dev
-pnpm --filter @ccais/embedded-chatbot-server build
-pnpm --filter @ccais/embedded-chatbot-server start
-pnpm --filter @ccais/embedded-chatbot-core build
-pnpm --filter @ccais/embedded-chatbot-react build
-pnpm --filter @ccais/embedded-chatbot-angular build
-pnpm --filter @ccais/embedded-chatbot-react-demo dev
+npm run dev --workspace @ccais/embedded-chatbot-server
+npm run build --workspace @ccais/embedded-chatbot-server
+npm run start --workspace @ccais/embedded-chatbot-server
+npm run build --workspace @ccais/embedded-chatbot-core
+npm run build --workspace @ccais/embedded-chatbot-react
+npm run build --workspace @ccais/embedded-chatbot-angular
+npm run dev --workspace @ccais/embedded-chatbot-react-demo
 ```
 
 For production-like local server startup:
 
 ```bash
-pnpm --filter @ccais/embedded-chatbot-server build
-pnpm --filter @ccais/embedded-chatbot-server start
+npm run build --workspace @ccais/embedded-chatbot-server
+npm run start --workspace @ccais/embedded-chatbot-server
+```
+
+## Layer-By-Layer Setup
+
+Use `npm install` once at the repository root. npm workspaces install and link all packages.
+
+Core SDK:
+
+```bash
+npm run build --workspace @ccais/embedded-chatbot-core
+npm run typecheck --workspace @ccais/embedded-chatbot-core
+```
+
+Backend proxy:
+
+```bash
+cp .env.example .env
+npm run dev --workspace @ccais/embedded-chatbot-server
+npm run build --workspace @ccais/embedded-chatbot-server
+npm run start --workspace @ccais/embedded-chatbot-server
+```
+
+React wrapper:
+
+```bash
+npm run build --workspace @ccais/embedded-chatbot-react
+npm run typecheck --workspace @ccais/embedded-chatbot-react
+npm run dev --workspace @ccais/embedded-chatbot-react-demo
+```
+
+Angular wrapper:
+
+```bash
+npm run build --workspace @ccais/embedded-chatbot-angular
+npm run typecheck --workspace @ccais/embedded-chatbot-angular
 ```
 
 ## Troubleshooting
@@ -222,7 +257,7 @@ pnpm --filter @ccais/embedded-chatbot-server start
 - Server exits on startup: confirm `.env` exists and `OPEN_WEBUI_API_KEY` is set.
 - Browser CORS error: add the website origin to `ALLOWED_ORIGINS`.
 - Chat request returns a safe error message: confirm `OPEN_WEBUI_BASE_URL`, `OPEN_WEBUI_MODEL`, and the API key are valid.
-- Plain HTML example has no chatbot script: run `pnpm --filter @ccais/embedded-chatbot-core build` first.
+- Plain HTML example has no chatbot script: run `npm run build --workspace @ccais/embedded-chatbot-core` first.
 
 ## Phase 1 Limitations
 

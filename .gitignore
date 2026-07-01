@@ -8,4 +8,4 @@ coverage/
 .vite/
 .angular/
 *.log
-pnpm-debug.log*
+npm-debug.log*
