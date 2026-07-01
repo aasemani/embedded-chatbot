@@ -1,0 +1,19 @@
+{
+  "name": "ccais-embedded-chatbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reusable embedded chatbot SDK with framework wrappers and a secure backend proxy.",
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "build": "pnpm --filter './packages/**' -r run build",
+    "dev": "pnpm --filter @ccais/embedded-chatbot-server dev",
+    "lint": "pnpm --filter './packages/**' -r run lint",
+    "typecheck": "pnpm --filter './packages/**' -r run typecheck",
+    "clean": "pnpm --filter './packages/**' -r run clean"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@ccais/embedded-chatbot-core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic CCAIS embedded chatbot web component.",
+  "type": "module",
+  "main": "dist/ccais-embedded-chatbot.js",
+  "module": "dist/ccais-embedded-chatbot.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/ccais-embedded-chatbot.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
+    "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "lit": "^3.2.1"
+  },
+  "devDependencies": {
+    "typescript": "~5.5.4",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ccais/embedded-chatbot-angular-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@angular/core": "^18.2.13",
+    "@angular/platform-browser": "^18.2.13",
+    "@ccais/embedded-chatbot-angular": "workspace:*"
+  }
+}
