@@ -4,6 +4,8 @@ Phase 1 of `CCAIS-embedded-chatbot` is a reusable embedded chatbot SDK for websi
 
 The browser never receives the Open WebUI API key. Frontend code calls the backend proxy, and the proxy calls Open WebUI with the server-side key.
 
+Chat responses are streamed end to end. The backend calls Open WebUI with `"stream": true`, normalizes the Open WebUI streaming response into browser-safe server-sent events, and the core widget renders assistant text incrementally.
+
 ## Architecture
 
 ```text
@@ -17,9 +19,12 @@ Host website
 <ccais-chatbot> web component
   |
   | POST /api/chat
+  | Accept: text/event-stream
   v
 @ccais/embedded-chatbot-server
   |
+  | POST /api/chat/completions
+  | stream: true
   | Authorization: Bearer OPEN_WEBUI_API_KEY
   v
 Open WebUI /api/chat/completions
@@ -62,6 +67,16 @@ Do not put `OPEN_WEBUI_API_KEY` or any equivalent key in frontend environment va
 
 Only the backend reads `OPEN_WEBUI_API_KEY`. The frontend sends chat requests to `POST {apiBaseUrl}/api/chat`, and the backend forwards validated requests to Open WebUI.
 
+The browser receives only sanitized server-sent events:
+
+```text
+event: delta
+data: {"delta":"Assistant text chunk"}
+
+event: done
+data: {}
+```
+
 ## Install
 
 ```bash
@@ -95,6 +110,30 @@ Expected response:
   "status": "ok",
   "service": "CCAIS Embedded Chatbot Server"
 }
+```
+
+Streaming chat test:
+
+```bash
+curl -N -X POST http://localhost:4000/api/chat \
+  -H "accept: text/event-stream" \
+  -H "content-type: application/json" \
+  --data '{
+    "chatbotId": "support",
+    "sessionId": "local-test-session",
+    "message": "Hello",
+    "history": []
+  }'
+```
+
+Expected response shape:
+
+```text
+event: delta
+data: {"delta":"Assistant response chunk"}
+
+event: done
+data: {}
 ```
 
 ## Environment Variables
@@ -263,7 +302,6 @@ npm run typecheck --workspace @ccais/embedded-chatbot-angular
 
 Phase 1 does not include:
 
-- Streaming responses
 - Admin dashboard
 - Database persistence
 - Multi-tenant config database
@@ -275,7 +313,7 @@ Phase 1 does not include:
 
 ## Future Roadmap
 
-- Streaming response support.
+- Better streaming controls, including cancellation and retry UI.
 - Durable session and chat history storage.
 - Tenant-level chatbot configuration.
 - Admin dashboard for prompt, theme, and model settings.

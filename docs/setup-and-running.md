@@ -11,6 +11,8 @@ This guide walks through installing the npm monorepo, configuring the secure bac
 
 The Open WebUI API key must stay on the backend. Do not add it to frontend `.env` files or browser-facing environment variables.
 
+Chat responses stream end to end. The backend sends `"stream": true` to Open WebUI and exposes the result to browsers as sanitized server-sent events.
+
 ## 1. Install Dependencies
 
 Install once from the repository root:
@@ -156,7 +158,8 @@ npm run start --workspace @ccais/embedded-chatbot-server
 Test a chat request:
 
 ```bash
-curl -X POST http://localhost:4000/api/chat \
+curl -N -X POST http://localhost:4000/api/chat \
+  -H "accept: text/event-stream" \
   -H "content-type: application/json" \
   --data '{
     "chatbotId": "support",
@@ -168,10 +171,15 @@ curl -X POST http://localhost:4000/api/chat \
 
 Expected shape:
 
-```json
-{
-  "message": "Assistant response text"
-}
+```text
+event: delta
+data: {"delta":"Assistant response chunk"}
+
+event: delta
+data: {"delta":"Another response chunk"}
+
+event: done
+data: {}
 ```
 
 The backend forwards the request to:
@@ -180,7 +188,15 @@ The backend forwards the request to:
 POST {OPEN_WEBUI_BASE_URL}/api/chat/completions
 ```
 
-using `Authorization: Bearer {OPEN_WEBUI_API_KEY}` on the server side only.
+using `Authorization: Bearer {OPEN_WEBUI_API_KEY}` on the server side only. The Open WebUI payload includes:
+
+```json
+{
+  "stream": true
+}
+```
+
+The frontend never receives the Open WebUI API key or raw backend error details.
 
 ## 6. React Wrapper Layer
 
@@ -337,6 +353,10 @@ Add the browser origin to `ALLOWED_ORIGINS`, then restart the backend. Origins m
 Chat response says the request could not be processed:
 
 Confirm Open WebUI is running, `OPEN_WEBUI_BASE_URL` is correct, `OPEN_WEBUI_MODEL` exists, and the API key is valid.
+
+Streaming request appears to hang in curl:
+
+Use `curl -N` so curl does not buffer the server-sent event stream.
 
 Plain HTML example does not load the chatbot:
 

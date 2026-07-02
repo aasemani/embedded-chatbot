@@ -16,6 +16,12 @@ export type ChatResponse = {
   message: string;
 };
 
+export type ChatStreamHandlers = {
+  onDelta: (delta: string) => void;
+  onDone?: (message: string) => void;
+  signal?: AbortSignal;
+};
+
 export type ChatbotPosition = "bottom-right" | "bottom-left";
 
 export type ChatbotConfig = {

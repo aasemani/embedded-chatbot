@@ -45,6 +45,7 @@ export class CcaisChatbotElement extends LitElement {
     isOpen: { type: Boolean, state: true },
     inputValue: { type: String, state: true },
     loading: { type: Boolean, state: true },
+    assistantStreaming: { type: Boolean, state: true },
     errorMessage: { type: String, state: true },
     messages: { state: true }
   };
@@ -61,6 +62,7 @@ export class CcaisChatbotElement extends LitElement {
   private isOpen = false;
   private inputValue = "";
   private loading = false;
+  private assistantStreaming = false;
   private errorMessage = "";
   private messages: ChatMessage[] = [];
   private readonly sessionId = getOrCreateSessionId();
@@ -139,27 +141,71 @@ export class CcaisChatbotElement extends LitElement {
     this.inputValue = "";
     this.errorMessage = "";
     this.loading = true;
+    this.assistantStreaming = false;
 
     try {
       const chatClient = new ChatClient(this.apiBaseUrl);
-      const response = await chatClient.sendMessage({
-        chatbotId: this.chatbotId,
-        sessionId: this.sessionId,
-        message,
-        history
-      });
+      let assistantMessage = "";
+      let assistantMessageAdded = false;
 
-      this.messages = [
-        ...this.messages,
+      const response = await chatClient.streamMessage(
         {
-          role: "assistant",
-          content: response.message
+          chatbotId: this.chatbotId,
+          sessionId: this.sessionId,
+          message,
+          history
+        },
+        {
+          onDelta: (delta) => {
+            assistantMessage += delta;
+            this.assistantStreaming = true;
+
+            if (!assistantMessageAdded) {
+              this.messages = [
+                ...this.messages,
+                {
+                  role: "assistant",
+                  content: assistantMessage
+                }
+              ];
+              assistantMessageAdded = true;
+              return;
+            }
+
+            this.replaceLastAssistantMessage(assistantMessage);
+          }
         }
-      ];
+      );
+
+      if (!assistantMessageAdded) {
+        this.messages = [
+          ...this.messages,
+          {
+            role: "assistant",
+            content: response.message
+          }
+        ];
+      }
     } catch (error) {
       this.errorMessage = error instanceof Error && error.message ? error.message : DEFAULT_ERROR_MESSAGE;
     } finally {
       this.loading = false;
+      this.assistantStreaming = false;
+    }
+  }
+
+  private replaceLastAssistantMessage(content: string): void {
+    const nextMessages = [...this.messages];
+
+    for (let index = nextMessages.length - 1; index >= 0; index -= 1) {
+      if (nextMessages[index]?.role === "assistant") {
+        nextMessages[index] = {
+          role: "assistant",
+          content
+        };
+        this.messages = nextMessages;
+        return;
+      }
     }
   }
 
@@ -194,7 +240,7 @@ export class CcaisChatbotElement extends LitElement {
           ${this.messages.map(
             (message) => html`<div class="message ${message.role}">${message.content}</div>`
           )}
-          ${this.loading
+          ${this.loading && !this.assistantStreaming
             ? html`<div class="message assistant typing" role="status">Thinking...</div>`
             : null}
           ${this.errorMessage ? html`<div class="error" role="alert">${this.errorMessage}</div>` : null}
